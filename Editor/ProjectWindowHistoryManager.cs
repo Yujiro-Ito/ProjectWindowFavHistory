@@ -11,6 +11,8 @@ namespace ProjectWindowHistory
     public static class ProjectWindowHistoryManager
     {
         private static readonly Dictionary<EditorWindow, ProjectWindowHistoryView> _historyViews = new();
+        private static readonly Dictionary<EditorWindow, ProjectWindowFavoriteView> _favoriteViews = new();
+        private static ProjectWindowFavoriteModel _favoriteModel = new();
         private static bool _isInitialized;
 
         static ProjectWindowHistoryManager()
@@ -44,6 +46,11 @@ namespace ProjectWindowHistory
                 view.Destroy();
                 _historyViews.Remove(window);
             }
+            foreach (var (window, view) in closedPairs)
+            {
+                view.Destroy();
+                _favoriteViews.Remove(window);
+            }
 
             // 最後に操作したProjectWindowを取得
             var lastProjectWindow = ProjectWindowReflectionUtility.GetLastProjectWindow();
@@ -70,10 +77,18 @@ namespace ProjectWindowHistory
             {
                 var view = new ProjectWindowHistoryView(projectWindow, history);
                 _historyViews.Add(projectWindow, view);
+
+            }
+
+            if (!_favoriteViews.ContainsKey(projectWindow))
+            {
+                var view = new ProjectWindowFavoriteView(projectWindow, _favoriteModel);
+                _favoriteViews.Add(projectWindow, view);
             }
 
             // Viewの更新処理を呼ぶ
             _historyViews[projectWindow].OnUpdate();
+            _favoriteViews[projectWindow].OnUpdate();
         }
     }
 }
