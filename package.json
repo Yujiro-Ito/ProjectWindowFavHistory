@@ -3,16 +3,17 @@
     "displayName": "ProjectWindowHistory", 
     "version": "1.0.1",               
     "unity": "2021.3",
-    "description": "ProjectWindow display history can be saved and restored using the Undo/Redo button.",
+    "description": "Fork from ProjectWindowHistory. ProjectWindow display history can be saved and restored using the Undo/Redo button. Can save bookmark opening directory and jump.",
     "author": {
-        "name": "yuji_ap",
-        "url": "https://twitter.com/yuji_ap"
+        "name": "Yujiro-Ito",
+        "url": "https://twitter.com/yujirogorilla"
     },
 
     "keywords": [
         "editor",
         "projectwindow",
-        "history"
+        "history",
+        "bookmark",
     ],
 
     "dependencies": {
