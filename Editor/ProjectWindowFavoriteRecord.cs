@@ -1,19 +1,14 @@
-using System.Runtime.InteropServices;
 using System.IO;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
-using SearchViewState = ProjectWindowHistory.ProjectWindowReflectionUtility.SearchViewState;
 using System;
-using System.Security.Policy;
 
 namespace ProjectWindowHistory
 {
-    [System.Serializable]
     public class ProjectWindowFavoriteRecord : IEquatable<ProjectWindowFavoriteRecord>
     {
-        [SerializeField] private string _aliasText;
-        [SerializeField] private int[] _selectedFolderInstanceIds;
+        private string _aliasText;
+        private int[] _selectedFolderInstanceIds;
 
         public int[] SelectedFolderInstanceIDs => _selectedFolderInstanceIds;
 
@@ -64,6 +59,19 @@ namespace ProjectWindowHistory
             if (folderInstancedIds == null || !folderInstancedIds.Any()) return false;
             if (_selectedFolderInstanceIds == null) return false;
             return _selectedFolderInstanceIds.SequenceEqual(folderInstancedIds);
+        }
+
+        public FavoriteRecordStoreData ToStoreData()
+        {
+            var assetPathArray = new string[_selectedFolderInstanceIds.Length];
+            for (var i = 0; i < _selectedFolderInstanceIds.Length; i++)
+            {
+                var instanceId = _selectedFolderInstanceIds[i];
+                var assetPath = AssetDatabase.GetAssetPath(instanceId);
+                assetPathArray[i] = assetPath;
+            }
+
+            return new FavoriteRecordStoreData(assetPathArray, _aliasText);
         }
     }
 }

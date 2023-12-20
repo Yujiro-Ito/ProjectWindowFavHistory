@@ -82,7 +82,7 @@ namespace ProjectWindowHistory
         {
             var json = File.ReadAllText(StoreDataPath());
             Debug.Log($"Load {json}");
-            _records = JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(json)?.StoredFavoriteRecordList;
+            _records = JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(json)?.FavoriteRecordList;
         }
 
         private void StoreToJson()
