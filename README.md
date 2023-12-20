@@ -28,8 +28,8 @@ https://github.com/Yujiro-Ito/ProjectWindowFavHistory.git
 <img width="318" alt="image" src="https://github.com/Yusuke57/ProjectWindowHistory/assets/27964732/94745d5b-2329-43a5-b3ab-f314f8194a4c">
 
 ## Author
-Original package developer ↓
+Original package developer ↓  
 @yuji_ap: [https://twitter.com/yuji_ap](https://twitter.com/yuji_ap)
 
-Fav function developer
+Fav function developer  
 @Yujiro-Ito: https://twitter.com/yujirogorilla
