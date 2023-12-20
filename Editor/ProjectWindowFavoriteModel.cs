@@ -7,7 +7,9 @@ namespace ProjectWindowHistory
 {
     public class ProjectWindowFavoriteModel 
     {
-        public string StoreDataPath() => Path.Combine(Application.persistentDataPath, "FavoriteRecord.json");
+        public string StoreDataDirectory => Path.Combine(Application.persistentDataPath, Application.dataPath.Split('/').Reverse().Skip(1).FirstOrDefault());
+        public string StoreDataPath() => Path.Combine(StoreDataDirectory, "FavoriteRecord.json");
+
         private List<ProjectWindowFavoriteRecord> _records = new();
 
         private const int MaxRecordCount = 20;
@@ -88,6 +90,10 @@ namespace ProjectWindowHistory
         private void StoreToJson()
         {
             Debug.Log(_records);
+            if (!Directory.Exists(StoreDataDirectory))
+            {
+                Directory.CreateDirectory(StoreDataDirectory);
+            }
             var storeData = new ProjectWindowFavoriteStoreData(_records);
             var json = JsonUtility.ToJson(storeData);
             Debug.Log(json + " " + StoreDataPath());
