@@ -52,7 +52,7 @@ namespace ProjectWindowHistory
                 float totalWidth = rect.width;
 
                 // Alias TextField
-                float aliasWidth = totalWidth * 0.25f;
+                float aliasWidth = totalWidth * 0.20f;
                 record.AliasText = EditorGUI.TextField(new Rect(x, rect.y, aliasWidth, lineHeight), record.AliasText);
                 x += aliasWidth + 4f;
 
@@ -62,7 +62,7 @@ namespace ProjectWindowHistory
                 x += pathWidth + 4f;
 
                 // StoreType popup
-                float popupWidth = totalWidth * 0.15f;
+                float popupWidth = totalWidth * 0.25f;
                 int currentIndex = record.StoreType == FavoriteStoreType.USER_LOCAL ? 0 : 1;
                 int newIndex = EditorGUI.Popup(new Rect(x, rect.y, popupWidth, lineHeight), currentIndex, StoreTypeNames);
                 record.StoreType = newIndex == 0 ? FavoriteStoreType.USER_LOCAL : FavoriteStoreType.PJ_GLOBAL;
