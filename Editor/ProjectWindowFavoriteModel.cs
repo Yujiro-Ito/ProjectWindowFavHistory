@@ -1,14 +1,16 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
 using System.Linq;
 
-namespace ProjectWindowHistory 
+namespace ProjectWindowHistory
 {
-    public class ProjectWindowFavoriteModel 
+    public class ProjectWindowFavoriteModel
     {
-        public string StoreDataDirectory => Path.Combine(Application.persistentDataPath, Application.dataPath.Split('/').Reverse().Skip(1).FirstOrDefault());
-        public string StoreDataPath() => Path.Combine(StoreDataDirectory, "FavoriteRecord.json");
+        public string UserLocalStoreDataDirectory => Path.Combine(Application.persistentDataPath, Application.dataPath.Split('/').Reverse().Skip(1).FirstOrDefault()); //Application.dataPathの末尾から2つ目がPJ名
+        public string PJGlobalStoreDataDirectory => Application.streamingAssetsPath;
+        public string StoreDataPath(string dirPath) => Path.Combine(dirPath, "FavoriteRecord.json");
 
         private List<ProjectWindowFavoriteRecord> _records = new();
 
@@ -37,7 +39,7 @@ namespace ProjectWindowHistory
             if (_records == null)
             {
                 return;
-            } 
+            }
             for (var i = _records.Count - 1; i >= 0; i--)
             {
                 var record = _records[i];
@@ -67,6 +69,12 @@ namespace ProjectWindowHistory
             StoreToJson();
         }
 
+        public void ReplaceAllAndSave(List<ProjectWindowFavoriteRecord> records)
+        {
+            _records = new List<ProjectWindowFavoriteRecord>(records);
+            StoreToJson();
+        }
+
         public IEnumerable<ProjectWindowFavoriteRecord> GetAllFavoriteRecords()
         {
             return _records;
@@ -78,26 +86,48 @@ namespace ProjectWindowHistory
             return _records.Any(x => x?.IsSequenceEqual(folderInstancedIds) ?? false);
         }
 
-        private bool IsStored => File.Exists(StoreDataPath());
+        private bool IsStored => File.Exists(StoreDataPath(PJGlobalStoreDataDirectory)) || File.Exists(StoreDataPath(UserLocalStoreDataDirectory));
 
         private void LoadFromJson()
         {
-            var json = File.ReadAllText(StoreDataPath());
-            Debug.Log($"Load {json}");
-            _records = JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(json)?.FavoriteRecordList;
+            var records = new List<ProjectWindowFavoriteRecord>();
+            var localJson = File.ReadAllText(StoreDataPath(UserLocalStoreDataDirectory));
+            records.AddRange(JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(localJson)?.ToFavoriteRecordList(FavoriteStoreType.USER_LOCAL) ?? new());
+
+            var globalJson = File.ReadAllText(StoreDataPath(PJGlobalStoreDataDirectory));
+            records.AddRange(JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(globalJson)?.ToFavoriteRecordList(FavoriteStoreType.PJ_GLOBAL) ?? new());
+
+            _records = records;
         }
 
         private void StoreToJson()
         {
-            Debug.Log(_records);
-            if (!Directory.Exists(StoreDataDirectory))
+            StoreToLocalJson(_records.Where(x => !x.IsProjectGlobal));
+            StoreToGlobalJson(_records.Where(x => x.IsProjectGlobal));
+        }
+
+        private void StoreToLocalJson(IEnumerable<ProjectWindowFavoriteRecord> records)
+        {
+            if (records == null) return;
+            if (!Directory.Exists(UserLocalStoreDataDirectory))
             {
-                Directory.CreateDirectory(StoreDataDirectory);
+                Directory.CreateDirectory(UserLocalStoreDataDirectory);
             }
-            var storeData = new ProjectWindowFavoriteStoreData(_records);
+            var storeData = new ProjectWindowFavoriteStoreData(records.ToList());
             var json = JsonUtility.ToJson(storeData);
-            Debug.Log(json + " " + StoreDataPath());
-            File.WriteAllText(StoreDataPath(), json);
+            File.WriteAllText(StoreDataPath(UserLocalStoreDataDirectory), json);
+        }
+
+        private void StoreToGlobalJson(IEnumerable<ProjectWindowFavoriteRecord> records)
+        {
+            if (records == null) return;
+            if (!Directory.Exists(PJGlobalStoreDataDirectory))
+            {
+                Directory.CreateDirectory(PJGlobalStoreDataDirectory);
+            }
+            var storeData = new ProjectWindowFavoriteStoreData(records.ToList());
+            var json = JsonUtility.ToJson(storeData);
+            File.WriteAllText(StoreDataPath(PJGlobalStoreDataDirectory), json);
         }
     }
 }

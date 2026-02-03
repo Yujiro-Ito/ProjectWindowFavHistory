@@ -17,7 +17,12 @@ namespace ProjectWindowHistory
         private Button _undoButton;
         private Button _redoButton;
 
-        private bool _isOneColumnViewMode; // 1カラムビューか
+        private bool _isOneColumnViewMode;
+
+        /// <summary>
+        /// これより狭いウィンドウ幅ではUI全体を非表示にする
+        /// </summary>
+        private const float MIN_WINDOW_WIDTH_TO_SHOW_UI = 550f;
         private float _timeAddToHistoryForSearchedText; // 現在の検索文字列が入力完了してからの経過時間
         private string _lastSearchedText; // 前フレームの検索文字列
         private const float DurationForInputCompleted = 2f; // 入力完了と判断する秒数
@@ -37,7 +42,7 @@ namespace ProjectWindowHistory
         private void CreateButton()
         {
             const float buttonWidth = 20f;
-            const float buttonMarginRight = 440f;
+            const float buttonLeft = 40f;
             _undoButton = new Button(Undo)
             {
                 text = "<",
@@ -46,7 +51,7 @@ namespace ProjectWindowHistory
                 {
                     width = buttonWidth,
                     position = new StyleEnum<Position>(Position.Absolute),
-                    right = buttonMarginRight + buttonWidth
+                    left = buttonLeft
                 }
             };
             _redoButton = new Button(Redo)
@@ -57,7 +62,7 @@ namespace ProjectWindowHistory
                 {
                     width = buttonWidth,
                     position = new StyleEnum<Position>(Position.Absolute),
-                    right = buttonMarginRight
+                    left = buttonLeft + buttonWidth + 4f
                 }
             };
 
@@ -132,6 +137,12 @@ namespace ProjectWindowHistory
         /// </summary>
         private void RefreshButtons()
         {
+            bool isTooNarrow = _projectWindow.position.width < MIN_WINDOW_WIDTH_TO_SHOW_UI;
+            bool hide = _isOneColumnViewMode || isTooNarrow;
+
+            _undoButton.style.display = hide ? DisplayStyle.None : DisplayStyle.Flex;
+            _redoButton.style.display = hide ? DisplayStyle.None : DisplayStyle.Flex;
+
             _undoButton.SetEnabled(!_isOneColumnViewMode && _history.CanUndo);
             _redoButton.SetEnabled(!_isOneColumnViewMode && _history.CanRedo);
         }
@@ -147,6 +158,7 @@ namespace ProjectWindowHistory
                 return;
             }
 
+            RefreshButtons();
             CheckSearchedText();
             CheckSelectedFolder();
         }
