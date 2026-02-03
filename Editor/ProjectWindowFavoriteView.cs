@@ -11,7 +11,7 @@ namespace ProjectWindowHistory
     {
         private readonly EditorWindow _projectWindow;
         private readonly ProjectWindowFavoriteModel _model;
-        private const float uiMarginRight = 465f;
+        private const float uiLeftBase = 100f; // History < > (56 + 20 + 4 + 20) の後ろ
 
         private bool _isOneColumnViewMode;
 
@@ -22,13 +22,13 @@ namespace ProjectWindowHistory
         private int[] _selectingFolderInstanceIds;
 
         private string _aliasText = "";
+        private const float MIN_WINDOW_WIDTH_TO_SHOW_UI = 730f;
 
         public ProjectWindowFavoriteView(EditorWindow projectWindow, ProjectWindowFavoriteModel model) {
             _projectWindow = projectWindow;
             _model = model;
 
             CreateButton();
-            CreateInputField();
             RefreshButtons();
         }
 
@@ -37,56 +37,58 @@ namespace ProjectWindowHistory
         /// </summary>
         private void CreateButton()
         {
+            const float buttonWidth = 20f;
+            const float fieldWidth = 120f;
+            float currentLeft = uiLeftBase;
 
+            // 1. エイリアス TextField
+            _aliasTextField = new TextField()
+            {
+                value = "",
+                focusable = true,
+                style =
+                {
+                    width = fieldWidth,
+                    position = new StyleEnum<Position>(Position.Absolute),
+                    left = currentLeft
+                },
+            };
+            _aliasTextField.RegisterValueChangedCallback(evt => OnAliasChanged(evt.newValue));
+            currentLeft += fieldWidth + 4f;
+
+            // 2. ♥ ボタン
+            _storeButton = new Button(Store)
+            {
+                text = "♥",
+                focusable = false,
+                style =
+                {
+                    width = buttonWidth,
+                    position = new StyleEnum<Position>(Position.Absolute),
+                    left = currentLeft
+                }
+            };
+            currentLeft += buttonWidth + 4f;
+
+            // 3. Load ボタン
             const float loadButtonWidth = 40f;
             _loadButton = new Button(Load)
             {
                 text = "Load",
                 focusable = false,
-                style = 
+                style =
                 {
                     width = loadButtonWidth,
                     position = new StyleEnum<Position>(Position.Absolute),
-                    right = uiMarginRight + loadButtonWidth / 2
+                    left = currentLeft
                 }
             };
 
-            const float buttonWidth = 20f;
-            _storeButton = new Button(Store)
-            {
-                text = "♥",
-                focusable = false,
-                style = 
-                {
-                    width = buttonWidth,
-                    position = new StyleEnum<Position>(Position.Absolute),
-                    right = uiMarginRight + buttonWidth + loadButtonWidth
-                }
-            };
-
+            _projectWindow.rootVisualElement.Add(_aliasTextField);
             _projectWindow.rootVisualElement.Add(_storeButton);
             _projectWindow.rootVisualElement.Add(_loadButton);
         }
 
-        private void CreateInputField()
-        {
-            const float fieldWidth = 120;
-            _aliasTextField = new TextField()
-            {
-                value = "",
-                focusable = true,
-                style = 
-                {
-                    width = fieldWidth,
-                    position = new StyleEnum<Position>(Position.Absolute),
-                    right = uiMarginRight + fieldWidth * 0.75f
-                },
-            };
-            _aliasTextField.RegisterValueChangedCallback(evt => OnAliasChanged(evt.newValue));
-
-            _projectWindow.rootVisualElement.Add(_aliasTextField);
-        }
-        
         public void OnUpdate()
         {
             // 1カラムビューかを取得
@@ -98,6 +100,7 @@ namespace ProjectWindowHistory
                 return;
             }
 
+            RefreshButtons();
             UpdateSelectedFolder();
         }
 
@@ -106,6 +109,13 @@ namespace ProjectWindowHistory
         /// </summary>
         private void RefreshButtons()
         {
+            bool isTooNarrow = _projectWindow.position.width < MIN_WINDOW_WIDTH_TO_SHOW_UI;
+            bool hide = _isOneColumnViewMode || isTooNarrow;
+
+            _aliasTextField.style.display = hide ? DisplayStyle.None : DisplayStyle.Flex;
+            _storeButton.style.display = hide ? DisplayStyle.None : DisplayStyle.Flex;
+            _loadButton.style.display = hide ? DisplayStyle.None : DisplayStyle.Flex;
+
             bool isStoreEnabled = !_model.HasRecord(_selectingFolderInstanceIds);
             _storeButton.SetEnabled(!_isOneColumnViewMode && isStoreEnabled);
         }
@@ -118,7 +128,7 @@ namespace ProjectWindowHistory
                 return;
             }
 
-            var record = new ProjectWindowFavoriteRecord(selectedFolderInstanceIds, _aliasText);
+            var record = new ProjectWindowFavoriteRecord(selectedFolderInstanceIds, _aliasText, FavoriteStoreType.USER_LOCAL);
             _model.ApplyAndSave(record);
         }
 
@@ -164,9 +174,13 @@ namespace ProjectWindowHistory
             }
 
             menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Open Memorized Json"), false, () =>
+            menu.AddItem(new GUIContent("設定変更"), false, () =>
             {
-                var path = _model.StoreDataPath();
+                ProjectWindowFavoriteEditorWindow.Open(_model);
+            });
+            menu.AddItem(new GUIContent("Open UserLocal Memorized Json"), false, () =>
+            {
+                var path = _model.StoreDataPath(_model.UserLocalStoreDataDirectory);
                 System.Diagnostics.Process.Start(path);
             });
             menu.AddItem(new GUIContent("Reload Json"), false, () =>

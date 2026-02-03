@@ -5,8 +5,13 @@ using UnityEditor;
 using System;
 using System.Linq;
 
-namespace ProjectWindowHistory 
+namespace ProjectWindowHistory
 {
+    public enum FavoriteStoreType
+    {
+        PJ_GLOBAL,
+        USER_LOCAL
+    }
     [Serializable]
     public class FavoriteRecordStoreData
     {
@@ -21,7 +26,7 @@ namespace ProjectWindowHistory
             _aliasText = aliasText;
         }
 
-        public ProjectWindowFavoriteRecord ToRecordData()
+        public ProjectWindowFavoriteRecord ToRecordData(FavoriteStoreType storeType = FavoriteStoreType.USER_LOCAL)
         {
             var instanceIds = new int[_assetPathArray.Length];
             for (var i = 0; i < _assetPathArray.Length; i++)
@@ -31,7 +36,7 @@ namespace ProjectWindowHistory
                 instanceIds[i] = instanceId;
             }
 
-            return new ProjectWindowFavoriteRecord(instanceIds, _aliasText);
+            return new ProjectWindowFavoriteRecord(instanceIds, _aliasText, storeType);
         }
     }
 
@@ -41,7 +46,7 @@ namespace ProjectWindowHistory
         [SerializeField]
         private List<FavoriteRecordStoreData> _favoriteStoreDataList;
 
-        public List<ProjectWindowFavoriteRecord> FavoriteRecordList => _favoriteStoreDataList.Select(x => x.ToRecordData()).ToList();
+        public List<ProjectWindowFavoriteRecord> ToFavoriteRecordList(FavoriteStoreType storeType) => _favoriteStoreDataList.Select(x => x.ToRecordData(storeType)).ToList();
 
         public ProjectWindowFavoriteStoreData(List<ProjectWindowFavoriteRecord> records)
         {
