@@ -91,11 +91,20 @@ namespace ProjectWindowHistory
         private void LoadFromJson()
         {
             var records = new List<ProjectWindowFavoriteRecord>();
-            var localJson = File.ReadAllText(StoreDataPath(UserLocalStoreDataDirectory));
-            records.AddRange(JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(localJson)?.ToFavoriteRecordList(FavoriteStoreType.USER_LOCAL) ?? new());
 
-            var globalJson = File.ReadAllText(StoreDataPath(PJGlobalStoreDataDirectory));
-            records.AddRange(JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(globalJson)?.ToFavoriteRecordList(FavoriteStoreType.PJ_GLOBAL) ?? new());
+            var localPath = StoreDataPath(UserLocalStoreDataDirectory);
+            if (File.Exists(localPath))
+            {
+                var localJson = File.ReadAllText(localPath);
+                records.AddRange(JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(localJson)?.ToFavoriteRecordList(FavoriteStoreType.USER_LOCAL) ?? new());
+            }
+
+            var globalPath = StoreDataPath(PJGlobalStoreDataDirectory);
+            if (File.Exists(globalPath))
+            {
+                var globalJson = File.ReadAllText(globalPath);
+                records.AddRange(JsonUtility.FromJson<ProjectWindowFavoriteStoreData>(globalJson)?.ToFavoriteRecordList(FavoriteStoreType.PJ_GLOBAL) ?? new());
+            }
 
             _records = records;
         }

@@ -1,5 +1,9 @@
 # ChangeLog
 
+## [1.1.1] - 2026-02-06
+### Fixed
+- LoadFromJson でファイルが存在しない場合に DirectoryNotFoundException が発生する不具合を修正
+
 ## [1.1.0] - 2026-02-03
 ### Added
 - Favorite 設定変更 EditorWindow を追加（Load メニュー内「設定変更」から開く）
