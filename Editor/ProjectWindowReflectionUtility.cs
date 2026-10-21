@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
+#if UNITY_6000_3_OR_NEWER
+using FolderId = UnityEngine.EntityId;
+#else
+using FolderId = System.Int32;
+#endif
 
 namespace ProjectWindowHistory
 {
@@ -42,13 +47,14 @@ namespace ProjectWindowHistory
 
         private static MethodInfo _getFolderInstanceIDsMethod;
         private static MethodInfo GetFolderInstanceIDsMethod => _getFolderInstanceIDsMethod
-            ??= ProjectBrowserType.GetMethod("GetFolderInstanceIDs", BindingFlags.NonPublic | BindingFlags.Static);
+            ??= ProjectBrowserType.GetMethod("GetFolderInstanceIDs", BindingFlags.NonPublic | BindingFlags.Static,
+                null, new[] { typeof(string[]) }, null);
 
         private static MethodInfo _setFolderSelectionMethod;
         // オーバーロードがあるので引数2つのメソッドの方を探して呼ぶ
         private static MethodInfo SetFolderSelectionMethod => _setFolderSelectionMethod
-            ??= ProjectBrowserType.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance)
-                .FirstOrDefault(method => method.Name == "SetFolderSelection" && method.GetParameters().Length == 2);
+            ??= ProjectBrowserType.GetMethod("SetFolderSelection", BindingFlags.NonPublic | BindingFlags.Instance,
+                null, new[] { typeof(FolderId[]), typeof(bool) }, null);
 
         private static MethodInfo _setSearchMethod;
         // オーバーロードがあるのでSearchFilter型引数のメソッドの方を探して呼ぶ
@@ -133,10 +139,11 @@ namespace ProjectWindowHistory
         public static int[] GetLastFolderInstanceIds(EditorWindow targetProjectWindow)
         {
             // 選択中のフォルダのパス配列を取得
-            var lastFolderPaths = LastFoldersField.GetValue(targetProjectWindow) ?? Array.Empty<object>();
+            var lastFolderPaths = LastFoldersField.GetValue(targetProjectWindow) ?? Array.Empty<string>();
 
             // インスタンスID配列にして返す
-            return (int[]) GetFolderInstanceIDsMethod.Invoke(null, new[] { lastFolderPaths });
+            var folderIds = (FolderId[]) GetFolderInstanceIDsMethod.Invoke(null, new[] { lastFolderPaths });
+            return ToInstanceIds(folderIds);
         }
 
         /// <summary>
@@ -146,7 +153,18 @@ namespace ProjectWindowHistory
         /// <param name="selectedFolderInstanceIds"></param>
         public static void SetFolderSelection(EditorWindow targetProjectWindow, int[] selectedFolderInstanceIds)
         {
-            SetFolderSelectionMethod.Invoke(targetProjectWindow, new object[] { selectedFolderInstanceIds, false });
+            SetFolderSelectionMethod.Invoke(targetProjectWindow, new object[] { ToFolderIds(selectedFolderInstanceIds), false });
+        }
+
+        // Keep history and serialized records as int IDs; adapt only at the ProjectBrowser boundary.
+        internal static int[] ToInstanceIds(FolderId[] folderIds)
+        {
+            return folderIds.Select(id => (int) id).ToArray();
+        }
+
+        internal static FolderId[] ToFolderIds(int[] instanceIds)
+        {
+            return instanceIds.Select(id => (FolderId) id).ToArray();
         }
 
         /// <summary>
